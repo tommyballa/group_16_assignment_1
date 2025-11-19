@@ -3,7 +3,8 @@ Assignment 1 of Intelligent Robotics
 
 
 # how to run
-$ source /opt/ros/jazzy/setup.bash \
+```bash
+source /opt/ros/jazzy/setup.bash \
 $ colcon build \
 $ source install/setup.bash \
 $ ros2 launch ir_launch assignment_1.launch.py \

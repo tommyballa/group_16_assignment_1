@@ -4,11 +4,11 @@ Assignment 1 of Intelligent Robotics
 
 # how to run
 ```bash
-source /opt/ros/jazzy/setup.bash \
-colcon build \
-source install/setup.bash \
-ros2 launch ir_launch assignment_1.launch.py \
-ros2 launch slam_toolbox online_async_launch.py \
+source /opt/ros/jazzy/setup.bash 
+colcon build 
+source install/setup.bash 
+ros2 launch ir_launch assignment_1.launch.py 
+ros2 launch slam_toolbox online_async_launch.py 
 
 ros2 run apriltag_detect apriltag_node --ros-args \
      -r image_rect:=/rgb_camera/image \

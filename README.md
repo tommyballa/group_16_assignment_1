@@ -6,7 +6,6 @@ Assignment 1 of Intelligent Robotics
 ```bash
 source /opt/ros/jazzy/setup.bash 
 colcon build 
-source install/setup.bash
 
 terminal 1:
 source install/setup.bash

@@ -46,15 +46,13 @@ public:
     }
 
 private:
-    // ------------------------------------------------------
-    // ROS interfaces
+    // Creation of the ROS interfaces
     rclcpp_action::Client<NavigateToPose>::SharedPtr client_nav_;
     rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr sub_goal_;
     rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr sub_lidar_;
     rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr pub_vel_;
     rclcpp::TimerBase::SharedPtr timer_;
 
-    // ------------------------------------------------------
     // State variables
     geometry_msgs::msg::PoseStamped goal_;
     bool goal_received_;
@@ -66,8 +64,8 @@ private:
     float left_dist_;
     float right_dist_;
 
-    // ------------------------------------------------------
-    // Handle GOAL reception (only once)
+
+    // Goal handling
     void goal_callback(const geometry_msgs::msg::PoseStamped::SharedPtr msg)
     {
         if (goal_received_)
@@ -81,7 +79,6 @@ private:
         send_nav2_goal();
     }
 
-    // ------------------------------------------------------
     // Send goal to Nav2
     void send_nav2_goal()
     {
@@ -103,8 +100,7 @@ private:
         client_nav_->async_send_goal(g, opts);
     }
 
-    // ------------------------------------------------------
-    // Lidar processing: detect corridor
+    // Manual navigation
     void lidar_callback(const sensor_msgs::msg::LaserScan::SharedPtr msg)
     {
         int mid = msg->ranges.size() / 2;
@@ -116,16 +112,12 @@ private:
         right_dist_ = msg->ranges[right];
     }
 
-    // ------------------------------------------------------
-    // MAIN CONTROL LOOP
     void control_loop()
     {
         if (!goal_received_)
             return;
 
-        // --------------------------
         // Detect corridor entrance
-        // --------------------------
         if (!in_corridor_) {
             if (left_dist_ < 0.7 && right_dist_ < 0.7) {
                 RCLCPP_INFO(get_logger(), "Corridor detected: stopping Nav2");
@@ -138,17 +130,12 @@ private:
             return; // Nav2 sta navigando
         }
 
-        // --------------------------
         // Corridor navigation
-        // --------------------------
         if (in_corridor_ && !corridor_done_) {
             corridor_following();
             return;
         }
 
-        // --------------------------
-        // End corridor → resume Nav2
-        // --------------------------
         if (corridor_done_ && in_corridor_) {
             RCLCPP_INFO(get_logger(), "Corridor finished, resuming Nav2");
             in_corridor_ = false;
@@ -158,13 +145,10 @@ private:
         }
     }
 
-    // ------------------------------------------------------
-    // Corridor following logic
     void corridor_following()
     {
         geometry_msgs::msg::Twist cmd;
 
-        // exit condition: corridor widens
         if (left_dist_ > 1.0 && right_dist_ > 1.0) {
             RCLCPP_INFO(get_logger(), "Corridor exit detected");
             corridor_done_ = true;
@@ -172,17 +156,14 @@ private:
             return;
         }
 
-        // basic corridor behaviour
         cmd.linear.x = 0.15;
 
-        // wall following correction
         float error = left_dist_ - right_dist_;
         cmd.angular.z = -error * 1.2;  
 
         pub_vel_->publish(cmd);
     }
 
-    // ------------------------------------------------------
     void stop_robot()
     {
         geometry_msgs::msg::Twist z;

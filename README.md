@@ -7,8 +7,10 @@ Assignment 1 of Intelligent Robotics
 source /opt/ros/jazzy/setup.bash 
 colcon build 
 source install/setup.bash 
-ros2 launch ir_launch assignment_1.launch.py 
-ros2 launch slam_toolbox online_async_launch.py 
+ros2 launch ir_launch assignment_1.launch.py
+
+---ros2 launch slam_toolbox online_async_launch.py--- secondo me non serve questo
+
 
 ros2 run apriltag_detect apriltag_node --ros-args \
      -r image_rect:=/rgb_camera/image \

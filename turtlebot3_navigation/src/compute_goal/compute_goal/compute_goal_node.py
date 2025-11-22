@@ -11,7 +11,7 @@ class ComputeGoalNode(Node):
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
 
-        self.publisher = self.create_publisher(PoseStamped, '/goal_pose', 10)
+        self.publisher = self.create_publisher(PoseStamped, '/goal', 10)
         self.target_frame = 'map'
         self.tag_frames = ['tag36h11:1', 'tag36h11:10']
 

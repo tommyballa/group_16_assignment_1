@@ -4,7 +4,7 @@
   <version>0.0.1</version>
   <description>Custom navigation behaviors for TurtleBot3</description>
 
-  <maintainer email="you@example.com">Your Name</maintainer>
+  <maintainer email="ballatom@gmail.com">tommaso</maintainer>
   <license>Apache-2.0</license>
 
   <!-- Dipendenze build -->

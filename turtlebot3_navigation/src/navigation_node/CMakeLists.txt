@@ -14,6 +14,7 @@ ament_target_dependencies(navigation_node
   rclcpp_action
   geometry_msgs
   nav2_msgs
+  sensor_msgs
 )
 
 install(TARGETS navigation_node

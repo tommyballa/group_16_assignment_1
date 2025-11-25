@@ -21,7 +21,13 @@ def generate_launch_description():
         )
     )
 
-
+    initial_pose_publisher = Node(
+            package='initial_pose_publisher',
+            executable='initial_pose_publisher',
+            # Send messages and logs to the terminal
+            output='screen'
+    )
+    
     # Start the navigation Node
     navigation = Node(
         package='navigation_node',
@@ -63,10 +69,11 @@ def generate_launch_description():
         simulation_launch,
 
         # Wait 5 seconds before the other 3 components
-        
+        TimerAction(period=5.0, actions=[initial_pose_publisher]),
+
         TimerAction(period=5.0, actions=[navigation]),
 
         TimerAction(period=5.0, actions=[apriltag]),
 
-        TimerAction(period=5.0, actions=[compute_goal]),
+        TimerAction(period=10, actions=[compute_goal]),
     ])

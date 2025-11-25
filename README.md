@@ -28,5 +28,9 @@ terminal 4:
 source install/setup.bash
 ros2 run compute_goal compute_goal_node
 
+terminal 4:
+source install/setup.bash
+ros2 run table_node table_detection_node
+
 
 

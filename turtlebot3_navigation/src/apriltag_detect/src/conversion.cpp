@@ -1,3 +1,5 @@
+// CONVERSION CPP
+
 #include <Eigen/Geometry>
 #include <apriltag/common/matd.h>
 #include <apriltag_pose.h>
@@ -6,6 +8,7 @@
 #include <opencv2/core/mat.hpp>
 #include <tf2/convert.h>
 
+// Convert to ROS2 Quaternion for 3D vision
 template<>
 void tf2::convert(const Eigen::Quaterniond& eigen_quat, geometry_msgs::msg::Quaternion& msg_quat)
 {
@@ -15,6 +18,7 @@ void tf2::convert(const Eigen::Quaterniond& eigen_quat, geometry_msgs::msg::Quat
     msg_quat.z = eigen_quat.z();
 }
 
+// From AprilTag matrix to ROS2 matrix
 template<>
 void tf2::convert(const matd_t& mat, geometry_msgs::msg::Vector3& msg_vec)
 {
@@ -25,6 +29,7 @@ void tf2::convert(const matd_t& mat, geometry_msgs::msg::Vector3& msg_vec)
     msg_vec.z = mat.data[2];
 }
 
+// From OpenCV matrix 1x3 to ROS2 vec3
 template<>
 void tf2::convert(const cv::Mat_<double>& vec, geometry_msgs::msg::Vector3& msg_vec)
 {
@@ -35,6 +40,7 @@ void tf2::convert(const cv::Mat_<double>& vec, geometry_msgs::msg::Vector3& msg_
     msg_vec.z = vec.at<double>(2);
 }
 
+// From AprilTag pose to ROS2 Transform
 template<>
 geometry_msgs::msg::Transform
 tf2::toMsg(const apriltag_pose_t& pose)
@@ -47,6 +53,7 @@ tf2::toMsg(const apriltag_pose_t& pose)
     return t;
 }
 
+// From OpenCV translation / rotation to ROS2 transform
 template<>
 geometry_msgs::msg::Transform
 tf2::toMsg(const std::pair<cv::Mat_<double>, cv::Mat_<double>>& pose)

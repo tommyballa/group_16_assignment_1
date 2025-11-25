@@ -31,18 +31,15 @@ private:
     msg.header.stamp = this->now();
     msg.header.frame_id = "map";
 
-    // posizione iniziale
     msg.pose.pose.position.x = 0.0;
     msg.pose.pose.position.y = 0.0;
     msg.pose.pose.position.z = 0.0;
 
-    // orientamento neutro (nessuna rotazione)
     msg.pose.pose.orientation.x = 0.0;
     msg.pose.pose.orientation.y = 0.0;
     msg.pose.pose.orientation.z = 0.0;
     msg.pose.pose.orientation.w = 1.0;
 
-    // covarianza nulla
     for (int i = 0; i < 36; i++)
       msg.pose.covariance[i] = 0.0;
 

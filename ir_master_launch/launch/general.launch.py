@@ -75,5 +75,5 @@ def generate_launch_description():
 
         TimerAction(period=5.0, actions=[apriltag]),
 
-        TimerAction(period=10, actions=[compute_goal]),
+        TimerAction(period=10.0, actions=[compute_goal]),
     ])

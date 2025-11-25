@@ -7,8 +7,9 @@ import math
 # params
 MIN_TABLE_CLUSTER_SIZE = 4
 MAX_TABLE_CLUSTER_SIZE = 14
-DISTANCE_THRESHOLD = 1.0
-DETECTION_RATE_HZ = 1   
+RANGE_JUMP_THRESHOLD = 0.15      # break cluster if > 15 cm
+DETECTION_RATE_HZ = 1
+
 
 class TableDetectionNode(Node):
     def __init__(self):
@@ -17,63 +18,76 @@ class TableDetectionNode(Node):
         self.table_count_pub = self.create_publisher(Int32, '/tables', 10)
 
         self.scan_sub = self.create_subscription(
-            LaserScan, '/scan', self.scan_callback, 10)
-        # store latest scan
+            LaserScan,
+            '/scan',
+            self.scan_callback,
+            10
+        )
+
         self.latest_scan = None
-
-        # run detection at fixed rate
         self.timer = self.create_timer(1.0 / DETECTION_RATE_HZ, self.timer_callback)
-
-        self.get_logger().info("Table detection node started!")
+        self.get_logger().info("Table detection node started (range clustering).")
 
     def scan_callback(self, msg):
         self.latest_scan = msg
 
     def timer_callback(self):
-        if self.latest_scan is None:
-            return
-        self.process_scan(self.latest_scan)
+        if self.latest_scan is not None:
+            self.process_scan(self.latest_scan)
 
-    def polar_to_cartesian(self, r, theta):
-        x = r * math.cos(theta)
-        y = r * math.sin(theta)
-        return x, y
+    def compute_centroid(self, ranges, angles):
+        xs = []
+        ys = []
+        for r, th in zip(ranges, angles):
+            xs.append(r * math.cos(th))
+            ys.append(r * math.sin(th))
+        return (sum(xs) / len(xs), sum(ys) / len(ys))
 
     def process_scan(self, msg: LaserScan):
-        cluster = []
+        cluster_ranges = []
+        cluster_angles = []
         detected_tables = []
+
+        prev_r = None
 
         for i, r in enumerate(msg.ranges):
             if math.isinf(r) or math.isnan(r):
+                prev_r = None
                 continue
 
             theta = msg.angle_min + i * msg.angle_increment
-            x, y = self.polar_to_cartesian(r, theta)
 
-            if cluster:
-                prev_x, prev_y = cluster[-1]
-                distance = math.sqrt((x - prev_x)**2 + (y - prev_y)**2)
-                if distance > DISTANCE_THRESHOLD:
-                    if MIN_TABLE_CLUSTER_SIZE <= len(cluster) <= MAX_TABLE_CLUSTER_SIZE:
-                        cx = sum(p[0] for p in cluster) / len(cluster)
-                        cy = sum(p[1] for p in cluster) / len(cluster)
-                        detected_tables.append((cx, cy))
-                    cluster = []
+            if prev_r is None:
+                cluster_ranges = [r]
+                cluster_angles = [theta]
+                prev_r = r
+                continue
 
-            cluster.append((x, y))
+            if abs(r - prev_r) > RANGE_JUMP_THRESHOLD:
+                if MIN_TABLE_CLUSTER_SIZE <= len(cluster_ranges) <= MAX_TABLE_CLUSTER_SIZE:
+                    detected_tables.append(
+                        self.compute_centroid(cluster_ranges, cluster_angles)
+                    )
 
-        # last cluster
-        if MIN_TABLE_CLUSTER_SIZE <= len(cluster) <= MAX_TABLE_CLUSTER_SIZE:
-            cx = sum(p[0] for p in cluster) / len(cluster)
-            cy = sum(p[1] for p in cluster) / len(cluster)
-            detected_tables.append((cx, cy))
+                cluster_ranges = [r]
+                cluster_angles = [theta]
 
-        # publish number of detected tables
-        count_msg = Int32()
-        count_msg.data = len(detected_tables)
-        self.table_count_pub.publish(count_msg)
+            else:
+                cluster_ranges.append(r)
+                cluster_angles.append(theta)
 
-        self.get_logger().info(f"Detected {len(detected_tables)} tables.")
+            prev_r = r
+
+        if MIN_TABLE_CLUSTER_SIZE <= len(cluster_ranges) <= MAX_TABLE_CLUSTER_SIZE:
+            detected_tables.append(
+                self.compute_centroid(cluster_ranges, cluster_angles)
+            )
+        msg_out = Int32()
+        msg_out.data = len(detected_tables)
+        self.table_count_pub.publish(msg_out)
+
+        self.get_logger().info(f"[Detection] Tables: {len(detected_tables)}")
+
 
 def main(args=None):
     rclpy.init(args=args)
@@ -81,6 +95,6 @@ def main(args=None):
     rclpy.spin(node)
     rclpy.shutdown()
 
+
 if __name__ == '__main__':
     main()
-

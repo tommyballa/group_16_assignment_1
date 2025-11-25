@@ -24,7 +24,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'table_detection_node = table_detection.table_detection_node:main',
+            'table_detection_node = table_node.table_detection_node:main',
         ],
     },
 )

@@ -182,7 +182,7 @@ private:
 
         // Proportional controller to center the robot (P-controller)
         float error = left_dist_ - right_dist_;
-        cmd.angular.z = -error * 0.8;  
+        cmd.angular.z = -error * 0.7;  
 
         // Send velocity command
         pub_vel_->publish(cmd);

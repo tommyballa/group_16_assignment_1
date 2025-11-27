@@ -8,6 +8,7 @@
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "sensor_msgs/msg/laser_scan.hpp"
 #include "geometry_msgs/msg/twist.hpp"
+#include "std_msgs/msg/bool.hpp" 
 
 #include "nav2_msgs/action/navigate_to_pose.hpp"
 
@@ -42,6 +43,9 @@ public:
 
         // Publish velocity commands to robot
         pub_vel_ = this->create_publisher<geometry_msgs::msg::Twist>("/cmd_vel", 10);
+        
+        // Publisher for the navigation state
+        pub_goal_status_ = this->create_publisher<std_msgs::msg::Bool>("navigation_completed", 10);
 
         // Run control loop every 50 ms
         timer_ = this->create_wall_timer(
@@ -57,6 +61,7 @@ private:
     rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr sub_goal_;
     rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr sub_lidar_;
     rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr pub_vel_;
+    rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr pub_goal_status_; // NUOVO
     rclcpp::TimerBase::SharedPtr timer_;
 
     geometry_msgs::msg::PoseStamped goal_;
@@ -100,8 +105,13 @@ private:
         auto opts = rclcpp_action::Client<NavigateToPose>::SendGoalOptions();
         opts.result_callback = [this](const GoalHandleNav::WrappedResult & res)
         {
-            RCLCPP_INFO(this->get_logger(),
-                        "Nav2 completed");
+            RCLCPP_INFO(this->get_logger(), "Nav2 completed");
+            
+            std_msgs::msg::Bool status;
+            // If Nav2 succeed, send True
+            status.data = (res.code == rclcpp_action::ResultCode::SUCCEEDED); 
+            this->pub_goal_status_->publish(status);
+
         };
 
         client_nav_->async_send_goal(g, opts);
@@ -131,6 +141,7 @@ private:
             if (left_dist_ < 0.7 && right_dist_ < 0.7) {
                 RCLCPP_INFO(get_logger(), "Corridor detected: stopping Nav2");
                 stop_robot();
+                
                 // Cancel goal, switch to corridor mode
                 client_nav_->async_cancel_all_goals(); 
                 in_corridor_ = true;
@@ -139,13 +150,13 @@ private:
             return; 
         }
 
-        // Start following corridor
+        // Corridor following
         if (in_corridor_ && !corridor_done_) {
             corridor_following();
             return;
         }
 
-        // Exited corridor and return to Nav2 original goal
+        // Corridor finished and nav2 navigation is resumed
         if (corridor_done_ && in_corridor_) {
             RCLCPP_INFO(get_logger(), "Corridor finished, resuming Nav2");
             in_corridor_ = false;
@@ -159,7 +170,7 @@ private:
     {
         geometry_msgs::msg::Twist cmd;
 
-        // Exit condition is if the two sides open up
+        // Exiting condition: edge distance greater than 1 meter
         if (left_dist_ > 1.0 && right_dist_ > 1.0) {
             RCLCPP_INFO(get_logger(), "Corridor exit detected");
             corridor_done_ = true;
@@ -169,7 +180,7 @@ private:
 
         cmd.linear.x = 0.15;        // Slow drive forward
 
-        // Proportional check if one of the walls is closer
+        // Proportional controller to center the robot (P-controller)
         float error = left_dist_ - right_dist_;
         cmd.angular.z = -error * 0.8;  
 

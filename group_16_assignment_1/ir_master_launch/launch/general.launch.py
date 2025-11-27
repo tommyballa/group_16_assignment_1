@@ -88,10 +88,7 @@ def generate_launch_description():
         TimerAction(period=5.0, actions=[initial_pose_publisher]),
 
         TimerAction(period=10.0, actions=[navigation]),
-
-        TimerAction(period=14.0, actions=[apriltag]),
-
         TimerAction(period=10.0, actions=[table_node]),
-
+        TimerAction(period=14.0, actions=[apriltag]),
         TimerAction(period=15.0, actions=[compute_goal]),
     ])

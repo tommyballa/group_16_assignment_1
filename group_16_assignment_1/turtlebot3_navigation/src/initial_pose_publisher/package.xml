@@ -4,7 +4,7 @@
   <version>0.1.0</version>
   <description>Publisher initialpose</description>
 
-  <maintainer email="email@example.com">Maintainer</maintainer>
+  <maintainer email="ballarintom@gmail.com">tommaso</maintainer>
   <license>Apache-2.0</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
